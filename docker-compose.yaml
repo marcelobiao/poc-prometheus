@@ -11,6 +11,15 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
 
+  grafana:
+    #admin:admin
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    container_name: grafana
+    depends_on:
+      - prometheus
+
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
@@ -21,7 +30,8 @@ services:
     - /:/rootfs:ro
     - /var/run:/var/run:rw
     - /sys:/sys:ro
-    - /var/lib/docker/:/var/lib/docker:ro
+    #- /var/lib/docker/:/var/lib/docker:ro
+    - /var/run/docker.sock/:/var/run/docker.sock
     depends_on:
       - redis
 
@@ -30,12 +40,11 @@ services:
     container_name: redis
     ports:
       - 6379:6379
-
-  grafana:
-    #admin:admin
-    image: grafana/grafana
+  
+  app:
+    build: .
+    container_name: app
+    volumes:
+      - .:/go/src
     ports:
-      - "3000:3000"
-    container_name: grafana
-    depends_on:
-      - prometheus
+      - 8181:8181
