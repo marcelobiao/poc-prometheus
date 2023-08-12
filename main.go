@@ -4,6 +4,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -40,6 +41,13 @@ func main() {
 	}()
 
 	home := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(time.Duration(rand.Intn(8)) * time.Second)
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Hello Full Cycle"))
+	})
+
+	contact := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(time.Duration(rand.Intn(5)) * time.Second)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Hello Full Cycle"))
 	})
@@ -48,8 +56,13 @@ func main() {
 		httpDuration.MustCurryWith(prometheus.Labels{"handler": "home"}),
 		promhttp.InstrumentHandlerCounter(httpRequestTotal, home),
 	)
+	d2 := promhttp.InstrumentHandlerDuration(
+		httpDuration.MustCurryWith(prometheus.Labels{"handler": "contact"}),
+		promhttp.InstrumentHandlerCounter(httpRequestTotal, contact),
+	)
 
 	http.Handle("/", d)
+	http.Handle("/contact", d2)
 
 	http.Handle("/metrics", promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
 	log.Fatal(http.ListenAndServe(":8181", nil))
